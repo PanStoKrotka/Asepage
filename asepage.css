@@ -1,0 +1,53 @@
+body {
+    margin: 0px;
+}
+
+.nawigacja {
+    top: 0;
+    width: 100%;
+    background-color: #2aa33d;
+    color: white;
+    display: flex;
+    z-index: 1000;
+}
+
+/* Styl dla kontenera menu rozwijanego */
+.dropdown-1, .dropdown-2 {
+    position: relative;
+    display: inline-block;
+}
+
+.nawigacja a, .nav-zapisywanie a, .nav-przydatne a {
+    color: white;
+    text-align: center;
+    padding: 15px 15px;
+    text-decoration: none;
+    font-size: 18px;
+    display: inline-block;
+}
+
+.nawigacja a:hover, .nav-zapisywanie a:hover, .nav-przydatne a:hover {
+    background-color: aliceblue;
+    color: black;
+}
+
+/* Ukrywamy podmenu na starcie i ustawiamy pozycję pod głównym menu */
+.nav-zapisywanie, .nav-przydatne {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: #2aa33d;
+    width: 100%;
+    min-width: 120px;
+    z-index: 1001;
+}
+
+/* Pokazuje podmenu, gdy myszka jest nad głównym przyciskiem LUB nad samym podmenu */
+.dropdown-1:hover .nav-zapisywanie, .dropdown-2:hover .nav-przydatne {
+    display: flex;
+    flex-direction: column; /* Układa opcje 1 i 2 w pionie, możesz zmienić na row */
+}
+.hidden {
+    display: none;
+}
