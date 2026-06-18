@@ -1,0 +1,204 @@
+// const titleInput = document.getElementById('title');
+// const urlInput = document.getElementById('url');
+// const linkList = document.getElementById('linkList');
+
+// // 2. Deklaracja tablicy na linki
+// let links = [];
+
+// // 3. Inicjalizacja pamięci w chmurze
+// // NAPRAWIONO: Bezpośrednie użycie klasy RemoteStorage (bez .default)
+// // ZMIEŃ "moj-unikalny-kod-123" na swój własny sekretny ciąg znaków!
+// const remoteDB = new RemoteStorage({ userId: "29250407" });
+
+// // Funkcja przełączania sekcji (zostaje bez zmian)
+// function showSection(sectionId) {
+//     document.getElementById('linki').classList.add('hidden');
+//     document.getElementById('konwerter').classList.add('hidden');
+//     document.getElementById(sectionId).classList.remove('hidden');
+// }
+
+// // 4. Ładowanie linków z chmury przy starcie
+// async function loadLinks() {
+//     try {
+//         const savedLinks = await remoteDB.getItem('myLinks');
+//         links = savedLinks ? JSON.parse(savedLinks) : [];
+//         renderLinks();
+//     } catch (error) {
+//         console.error("Błąd podczas pobierania danych z chmury:", error);
+//     }
+// }
+
+// // 5. Rysowanie linków w HTML
+// function renderLinks() {
+//     linkList.innerHTML = ''; 
+//     links.forEach((link, index) => {
+//         const li = document.createElement('li');
+//         li.className = 'link-card';
+//         li.innerHTML = `
+//             <div class="link-info">
+//                 <a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a>
+//                 <br>
+//                 <small style="color: #666;">${link.url}</small>
+//             </div>
+//             <button class="delete-btn" onclick="deleteLink(${index})">Usuń</button>
+//         `;
+//         linkList.appendChild(li);
+//     });
+// }
+
+// // 6. Dodawanie nowego linku
+// async function addLink() {
+//     const title = titleInput.value.trim();
+//     let url = urlInput.value.trim();
+//     if (!title || !url) {
+//         alert('Wypełnij oba pola!');
+//         return;
+//     }
+//     if (!url.startsWith('http://') && !url.startsWith('https://')) {
+//         url = 'https://' + url;
+//     }
+//     const newLink = { title, url };
+//     links.push(newLink);
+//     renderLinks();
+//     try {
+//         await remoteDB.setItem('myLinks', JSON.stringify(links));
+//     } catch (error) {
+//         console.error("Nie udało się zapisać linku:", error);
+//     }
+//     titleInput.value = '';
+//     urlInput.value = '';
+// }
+
+// // 7. Usuwanie linku
+// async function deleteLink(index) {
+//     links.splice(index, 1);
+//     renderLinks();
+//     try {
+//         await remoteDB.setItem('myLinks', JSON.stringify(links));
+//     } catch (error) {
+//         console.error("Nie udało się usunąć linku z chmury:", error);
+//     }
+// }
+// // Uruchomienie pobierania na starcie
+// loadLinks();
+// 1. Definiowanie elementów strony
+const titleInput = document.getElementById('title');
+const urlInput = document.getElementById('url');
+const linkList = document.getElementById('linkList');
+
+// 2. Deklaracja tablicy na linki
+let links = [];
+
+// 3. Inicjalizacja pamięci w chmurze
+// ZMIEŃ "moj-unikalny-kod-123" na swój własny sekretny ciąg znaków!
+const remoteDB = new RemoteStorage({ userId: "moj-unikalny-kod-123" });
+
+// === IMPLEMENTACJA CORS PROXY ===
+// Podmieniamy wewnętrzną metodę call biblioteki, aby przekierować ruch
+remoteDB.call = async function(method, endpoint, body) {
+    const originalUrl = `https://remote.storage{endpoint}`;
+    
+    // Łączymy adres proxy z oryginalnym adresem URL
+    const proxyUrl = `https://corsproxy.io{encodeURIComponent(originalUrl)}`;
+
+    const options = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    };
+
+    if (body) {
+        options.body = typeof body === 'string' ? body : JSON.stringify(body);
+    }
+
+    const response = await fetch(proxyUrl, options);
+    
+    if (!response.ok) {
+        throw new Error(`Błąd sieci proxy: ${response.status}`);
+    }
+
+    // Biblioteka oczekuje czystego tekstu na wyjściu
+    return await response.text();
+};
+// =================================
+
+// Funkcja przełączania sekcji
+function showSection(sectionId) {
+    document.getElementById('linki').classList.add('hidden');
+    document.getElementById('konwerter').classList.add('hidden');
+    document.getElementById(sectionId).classList.remove('hidden');
+}
+
+// 4. Ładowanie linków z chmury przy starcie
+async function loadLinks() {
+    try {
+        const savedLinks = await remoteDB.getItem('myLinks');
+        links = savedLinks ? JSON.parse(savedLinks) : [];
+        renderLinks();
+    } catch (error) {
+        console.error("Błąd podczas pobierania danych z chmury:", error);
+    }
+}
+
+// 5. Rysowanie linków w HTML
+function renderLinks() {
+    linkList.innerHTML = ''; 
+    links.forEach((link, index) => {
+        const li = document.createElement('li');
+        li.className = 'link-card';
+        li.innerHTML = `
+            <div class="link-info">
+                <a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a>
+                <br>
+                <small style="color: #666;">${link.url}</small>
+            </div>
+            <button class="delete-btn" onclick="deleteLink(${index})">Usuń</button>
+        `;
+        linkList.appendChild(li);
+    });
+}
+
+// 6. Dodawanie nowego linku
+async function addLink() {
+    const title = titleInput.value.trim();
+    let url = urlInput.value.trim();
+    
+    if (!title || !url) {
+        alert('Wypełnij oba pola!');
+        return;
+    }
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url;
+    }
+    
+    const newLink = { title, url };
+    links.push(newLink);
+    
+    renderLinks();
+    
+    try {
+        await remoteDB.setItem('myLinks', JSON.stringify(links));
+    } catch (error) {
+        console.error("Nie udało się zapisać linku:", error);
+    }
+    
+    titleInput.value = '';
+    urlInput.value = '';
+}
+
+// 7. Usuwanie linku
+async function deleteLink(index) {
+    links.splice(index, 1);
+    
+    renderLinks();
+    
+    try {
+        await remoteDB.setItem('myLinks', JSON.stringify(links));
+    } catch (error) {
+        console.error("Nie udało się usunąć linku z chmury:", error);
+    }
+}
+
+// Uruchomienie pobierania na starcie
+loadLinks();
